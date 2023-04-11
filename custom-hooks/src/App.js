@@ -1,36 +1,42 @@
-import React, { useState, useEffect } from "react";
-import { BASE_URL } from "./constants/constants";
-import axios from "axios";
+import React from "react";
 import {Title,NameContainer,PostContainer } from './style'
 import { GlobalStyle } from './GlobalStyle'
 import { Header } from './components/Header/Header'
 import { Card } from './components/Card/Card'
+import { useCapturarPostagens } from "./hooks/useGetPostagens";
+import { useRequestDatas } from "./hooks/useRequestDatas";
+import { BASE_URL } from "./constants/constants";
+
+
+
+
+
 function App() {
-  const [nomeUsuarios, setNomeUsuarios] = useState([]);
-  const [postagens, setPostagens] = useState([]);
+  const [postagens, isLoadingPostagem, isErrorPostagem] = useRequestDatas(`${BASE_URL}comments`, [])
 
-  useEffect(() => {
-    axios
-      .get(`${BASE_URL}users`)
-      .then((response) => {
-        setNomeUsuarios(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+  const [nomeUsuarios, isLoadingNome, isErrorNome] = useRequestDatas("https://hp-api.onrender.com/api/characters", [])
 
 
-  useEffect(() => {
-    axios
-      .get(`${BASE_URL}comments`)
-      .then((response) => {
-        setPostagens(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  });
+ const renderNome = nomeUsuarios.map((usuario) => {
+  return(
+  <Card 
+  key={usuario.id} 
+  text={usuario.name} 
+  backgroudColor={'nome'}
+  textColor={'nome'}
+  />)
+})
+
+const renderPostagem = postagens.map((post) => {
+  //console.log(post);
+  return(
+    <Card 
+    key={post.id} 
+    text={post.body} 
+    backgroudColor={'#1dc690'}
+    textColor={'#ffffff'}
+    />)
+})
 
   return (
     <div>
@@ -38,31 +44,19 @@ function App() {
       <Header />
       <Title>Nomes dos usuários</Title>
       <NameContainer>
-        {nomeUsuarios.map((usuario) => {
-          return(
-          <Card 
-          key={usuario.id} 
-          text={usuario.name} 
-          backgroudColor={'nome'}
-          textColor={'nome'}
-          />)
-        })}
+        {isLoadingNome && <p>Carregando...</p>}
+        {!isLoadingNome && isErrorNome && <p>Ocorreu um erro com sua solicitação</p>}
+        {!isLoadingNome && !nomeUsuarios.length && <p>Nenhum nome encontrado!</p>}
+        {!isLoadingNome && nomeUsuarios.length > 0 && renderNome}
       </NameContainer>
 
       <hr />
       <Title>Comentários dos usuários</Title>
       <PostContainer>
-
-      {postagens.map((post) => {
-        //console.log(post);
-        return(
-          <Card 
-          key={post.id} 
-          text={post.body} 
-          backgroudColor={'#1dc690'}
-          textColor={'#ffffff'}
-          />)
-      })}
+        {isLoadingPostagem && <p>Carregando...</p>}
+        {!isLoadingPostagem && isErrorPostagem && <p>Ocorreu um erro com sua solicitação</p>}
+        {!isLoadingPostagem && !postagens.length && <p>Nenhum comentário encontrado!</p>}
+        {!isLoadingPostagem && postagens.length > 0 && renderPostagem}
       </PostContainer>
     </div>
   );
